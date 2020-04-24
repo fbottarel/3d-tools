@@ -340,7 +340,7 @@ def main():
 
     for obj in object_dirlist:
 
-        if "mustard" not in obj: continue
+        #if "mustard" not in obj: continue
 
         print("Processing object " + obj)
         MESH_FILENAME = os.path.join(MESH_FOLDER, obj, MESH_OBJECT_FILENAME)
