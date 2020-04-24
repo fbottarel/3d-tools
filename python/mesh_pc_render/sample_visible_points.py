@@ -5,6 +5,7 @@
 import trimesh
 import numpy as np
 import os
+#import PIL
 
 MESH_FOLDER = "/home/fbottarel/workspace/3d-tools/python/mesh_pc_render/models"
 OUT_DIRECTORY = "/home/fbottarel/workspace/3d-tools/python/mesh_pc_render/partial_pc"
@@ -12,7 +13,7 @@ MESH_OBJECT_FILENAME = "textured_simple.obj"
 # MESH_FILENAME = "/home/fbottarel/workspace/mesh_pc_render/textured_simple.obj"
 # OUTPUT_FILENAME_RAW = "output.xyz"
 # OUTPUT_FILENAME_PCD = "output.pcd"
-CAMERA_VIEWPOINT = np.array([0.0, 0.0, 0.8])
+CAMERA_VIEWPOINT = np.array([0.6, 0.6, 0.6])
 NUMBER_SAMPLED_POINTS = 500
 
 
@@ -48,9 +49,9 @@ def renderMeshBackFaceCull(mesh, cam_viewpoint, number_sampled_points):
 
     camera_z_axis = (mesh.centroid - cam_viewpoint) / np.linalg.norm(mesh.centroid - cam_viewpoint)
 
-    camera_transform = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
+    camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
 
-    camera_transform[0:3,3] = cam_viewpoint
+    camera_transform_4x4[0:3,3] = cam_viewpoint
 
     # In order to understand which faces to remove from the mesh, we build a mask array
 
@@ -82,7 +83,7 @@ def renderMeshBackFaceCull(mesh, cam_viewpoint, number_sampled_points):
     # camera_marker = trimesh.creation.axis(axis_length=0.05,
     #                             axis_radius=0.001,
     #                             origin_size=0.001,
-    #                             transform=camera_transform)
+    #                             transform=camera_transform_4x4)
 
     # (camera_marker + mesh).show()
 
@@ -93,7 +94,7 @@ def renderMeshBackFaceCull(mesh, cam_viewpoint, number_sampled_points):
 
     # Transform the points as the camera was in the origin of the mesh
 
-    points_transformed_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform), np.transpose(points_homogeneous)))
+    points_transformed_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform_4x4), np.transpose(points_homogeneous)))
     points_transformed = points_transformed_homogeneous[:,0:3]
 
     return points, points_transformed
@@ -125,36 +126,33 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points):
 
     """
 
-    import PIL
+    # z axis is the ray from the mesh center to the camera axis center
+    # This inversion is necessary because the camera reference system uses the cinematographic
+    # convention
+    # https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/lookat-function
 
     mesh_centroid = mesh.centroid
+    camera_z_axis = (cam_viewpoint - mesh_centroid) / np.linalg.norm(mesh.centroid - cam_viewpoint)
 
-    # z axis is the ray from camera to the mesh center
+    # Obtain the camera transformation as a 4x4
 
-    camera_z_axis = (mesh.centroid - cam_viewpoint) / np.linalg.norm(mesh.centroid - cam_viewpoint)
-
-    camera_transform = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
-
-    camera_transform[0:3,3] = cam_viewpoint
+    camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
+    camera_transform_4x4[0:3,3] = cam_viewpoint
 
     # Create a scene with the mesh and a camera pointing to it
 
     scene = mesh.scene()
-
-    # Camera transform is automatic for now (we have the custom transform tho)
-
     scene.set_camera(resolution=[320,240],
                      fov=[60, 45], 
-                     angles=trimesh.transformations.euler_from_matrix(camera_transform, 'sxyz'), 
+                     angles=trimesh.transformations.euler_from_matrix(camera_transform_4x4, 'sxyz'), 
                      center=mesh_centroid, 
-                     distance=-np.linalg.norm(camera_transform[0:3, 3]))
+                     distance=np.linalg.norm(camera_transform_4x4[0:3, 3]))
 
     # convert the camera to rays with one ray per pixel
     origins, vectors, pixels = scene.camera_rays()
 
     # do the actual ray- mesh queries
-    points, index_ray, index_tri = mesh.ray.intersects_location(
-        origins, vectors, multiple_hits=False)
+    points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=False)
 
     # for each hit, find the distance along its vector
     # depth = trimesh.util.diagonal_dot(points - origins[0],
@@ -181,11 +179,14 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points):
 
     points_homogeneous = np.hstack((points, np.ones((points.shape[0],1), dtype=np.float32)))
 
-    # Transform the points as the camera was in the origin of the mesh
+    # Transform the "cinematographic" camera axis triad in one with the z axis facing towards mesh
 
-    points_transformed_homogeneous = np.transpose(np.matmul(np.linalg.inv(scene.camera_transform), np.transpose(points_homogeneous)))
-    # points_transformed_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform), np.transpose(points_homogeneous)))
-    points_transformed = points_transformed_homogeneous[:,0:3]
+    camera_transform_4x4 = camera_transform_4x4 @ np.diag([1, -1, -1, 1])    
+
+    # Obtain point coordinates in the camera ref system
+
+    points_transformed_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform_4x4), np.transpose(points_homogeneous)))
+    points_transformed = points_transformed_homogeneous[:, 0:3]
 
     return points, points_transformed
 
@@ -221,92 +222,23 @@ def main():
 
     for obj in object_dirlist:
 
-        if "mustard" not in obj:
-            continue
+        if "mustard" not in obj: continue
 
         print("Processing object " + obj)
         MESH_FILENAME = os.path.join(MESH_FOLDER, obj, MESH_OBJECT_FILENAME)
         OUTPUT_FILENAME_RAW = os.path.join(OUT_DIRECTORY, obj) + ".xyz"
         OUTPUT_FILENAME_PCD = os.path.join(OUT_DIRECTORY, obj) + "_pc.pcd"
+        OUTPUT_FILENAME_OFF = os.path.join(OUT_DIRECTORY, obj) + ".off"
 
         # Load the mesh
 
         mesh = trimesh.load(MESH_FILENAME)
-        
-        # mesh_centroid = mesh.centroid
 
-        # # z axis is the ray from camera to the mesh center
-
-        # camera_z_axis = (mesh.centroid - CAMERA_VIEWPOINT) / np.linalg.norm(mesh.centroid - CAMERA_VIEWPOINT)
-
-        # camera_transform = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
-
-        # camera_transform[0:3,3] = CAMERA_VIEWPOINT
-
-        # # Generate a camera axis marker with z axis pointing to the mesh
-
-        # camera_marker = trimesh.creation.axis(axis_length=0.05,
-        #                             axis_radius=0.001,
-        #                             origin_size=0.001,
-        #                             transform=camera_transform)
-
-        # # In order to understand which faces to remove from the mesh, we build a mask array
-
-        # mesh_total_faces = mesh.faces.shape[0]
-        # mesh_faces_to_keep = np.ones((mesh_total_faces), dtype=np.bool)
-
-        # for idx in range(0, mesh_total_faces):
-            
-        #     # Compute the cull condition here
-        #     # Compute the ray from camera to center of the mesh face
-
-        #     camera_face_vector = mesh.triangles_center[idx] - CAMERA_VIEWPOINT
-
-        #     # Cull condition is the dot product between the segment and outbound surface normal
-
-        #     cull_condition = np.dot(camera_face_vector, mesh.face_normals[idx]) > 0
-
-        #     if cull_condition:
-        #         mesh_faces_to_keep[idx] = False
-
-        # # Remove faces that do not meet the cull condition 
-
-        # mesh.update_faces(mesh_faces_to_keep)
-        # mesh.remove_unreferenced_vertices()
-
-        # # View the mesh in an OpenGL window
-
-        # # (camera_marker + mesh).show()
-
-        # # Sample points over the remaining mesh surface
-
-        # points = mesh.sample(NUMBER_SAMPLED_POINTS, return_index=False)
-        # points_homogeneous = np.hstack((points, np.ones((points.shape[0],1), dtype=np.float32)))
-
-        # # Transform the points as the camera was in the origin of the mesh
-
-        # points_transformed_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform), np.transpose(points_homogeneous)))
-        # points_transformed = points_transformed_homogeneous[:,0:3]
-
+        # points, points_transformed = renderMeshBackFaceCull(mesh, CAMERA_VIEWPOINT, NUMBER_SAMPLED_POINTS)
         points, points_transformed = renderMeshRayCast(mesh, CAMERA_VIEWPOINT, NUMBER_SAMPLED_POINTS)
 
-        np.savetxt(OUTPUT_FILENAME_RAW, points_transformed)
-
-        pcd_file_header = \
-        "# .PCD v.7 - Point Cloud Data file format\n\
-        VERSION .7\n\
-        FIELDS x y z\n\
-        SIZE 4 4 4\n\
-        TYPE F F F\n\
-        COUNT 1 1 1\n\
-        WIDTH " + str(points_transformed.shape[0])+"\n\
-        HEIGHT 1\n\
-        VIEWPOINT 0 0 0 1 0 0 0\n\
-        POINTS " + str(points_transformed.shape[0])+"\n\
-        DATA ascii\n"
-
-        with open(OUTPUT_FILENAME_RAW, 'r') as f: data=f.read()
-        with open(OUTPUT_FILENAME_PCD, 'w') as f: f.write(pcd_file_header + data)
+        savePCNPtoPCD(points_transformed, OUTPUT_FILENAME_PCD)
+        savePCNPtoOFF(points_transformed, OUTPUT_FILENAME_OFF)
 
 if __name__ == "__main__":
     main()
