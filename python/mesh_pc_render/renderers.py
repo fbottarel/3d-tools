@@ -33,7 +33,7 @@ def renderMeshAll(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=Tru
     # convention
     # https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/lookat-function
 
-    zif z_towards_mesh:
+    if z_towards_mesh:
         camera_z_axis = (cam_viewpoint - mesh_centroid) / np.linalg.norm(mesh.centroid - cam_viewpoint)
         camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
     else:
@@ -178,10 +178,7 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh
     # convention
     # https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/lookat-function
 
-    if z_towards_mesh:
-        camera_z_axis = (cam_viewpoint - mesh_centroid) / np.linalg.norm(mesh.centroid - cam_viewpoint)
-    else:
-        camera_z_axis = (mesh_centroid - cam_viewpoint) / np.linalg.norm(mesh.centroid - cam_viewpoint)
+    camera_z_axis = (cam_viewpoint - mesh_centroid) / np.linalg.norm(mesh.centroid - cam_viewpoint)
 
     # Obtain the camera transformation as a 4x4
 
@@ -230,7 +227,8 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh
 
     # Transform the "cinematographic" camera axis triad in one with the z axis facing towards mesh
 
-    camera_transform_4x4 = camera_transform_4x4 @ np.diag([1, -1, -1, 1])
+    if z_towards_mesh:
+        camera_transform_4x4 = camera_transform_4x4 @ np.diag([1, -1, -1, 1])
 
     # Obtain point coordinates in the camera ref system
 
