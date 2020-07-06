@@ -1,6 +1,59 @@
 import trimesh
 import numpy as np
 
+def renderMeshAll(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=True):
+    """
+    Renders a number of points on a mesh from a viewpoint, not considering any occlusion.
+
+    Parameters
+    ----------
+    mesh: trimesh.Mesh
+        Mesh to sample
+
+    cam_viewpoint: (3,) float
+        Point from which to observe the mesh
+
+    number_sampled_points: int
+        Number of points to sample on the mesh
+
+    Returns
+    ----------
+    points: (n, 3) float
+        Points sampled on the visible portion of the mesh, in the original mesh reference frame
+
+    points_camera_frame: (n, 3) float
+        Points sampled on the visible portion of the mesh, in the camera reference frame
+
+    """
+
+    mesh_centroid = mesh.centroid
+
+    # z axis is the ray from camera to the mesh center
+    # This inversion is necessary because the camera reference system uses the cinematographic
+    # convention
+    # https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/lookat-function
+
+    zif z_towards_mesh:
+        camera_z_axis = (cam_viewpoint - mesh_centroid) / np.linalg.norm(mesh.centroid - cam_viewpoint)
+        camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
+    else:
+        camera_z_axis = (mesh_centroid - cam_viewpoint) / np.linalg.norm(mesh.centroid - cam_viewpoint)
+        camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), -camera_z_axis)
+
+    camera_transform_4x4[0:3,3] = cam_viewpoint
+
+    # Sample points on the mesh surface (roughly equidistant)
+
+    points, _ = trimesh.sample.sample_surface_even(mesh, number_sampled_points)
+    points_homogeneous = np.hstack((points, np.ones((points.shape[0],1), dtype=np.float32)))
+
+    # Transform the points as the camera was in the origin of the mesh
+
+    points_camera_frame_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform_4x4), np.transpose(points_homogeneous)))
+    points_camera_frame = points_camera_frame_homogeneous[:,0:3]
+
+    return points, points_camera_frame
+
 
 def renderMeshBackFaceCull(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=True):
     """
@@ -37,10 +90,10 @@ def renderMeshBackFaceCull(mesh, cam_viewpoint, number_sampled_points, z_towards
 
     if z_towards_mesh:
         camera_z_axis = (cam_viewpoint - mesh_centroid) / np.linalg.norm(mesh.centroid - cam_viewpoint)
+        camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
     else:
         camera_z_axis = (mesh_centroid - cam_viewpoint) / np.linalg.norm(mesh.centroid - cam_viewpoint)
-
-    camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), camera_z_axis)
+        camera_transform_4x4 = trimesh.geometry.align_vectors(np.array([0,0,1], dtype=np.float32), -camera_z_axis)
 
     camera_transform_4x4[0:3,3] = cam_viewpoint
 
