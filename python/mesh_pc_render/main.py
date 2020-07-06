@@ -8,7 +8,7 @@ import os
 import argparse
 
 from io_utils import savePCNPtoOFF, savePCNPtoPCD, savePCNPtoXYZ
-from renderers import renderMeshBackFaceCull, renderMeshRayCast
+from renderers import renderMeshBackFaceCull, renderMeshRayCast, renderMeshAll
 
 # mesh_folder = "/home/fbottarel/workspace/docker-shared-workspace/shape-completion-ros/results/real_ycb_objects_results/meshes/holdout_models_holdout_views"
 # output_folder = "/home/fbottarel/workspace/docker-shared-workspace/shape-completion-ros/results/real_ycb_objects_results/completed_clouds"
@@ -53,12 +53,14 @@ def main(args):
     if not os.path.isdir(output_folder):
         os.mkdir(output_folder)
 
-    mesh_filename_ending = "_mean_shape.ply"
+    mesh_filename_ending = "textured_simple.obj"
+    # mesh_filename_ending = "_mean_shape.ply"
 
     for obj in object_dirlist:
 
         print("Processing object " + obj)
-        mesh_filename = os.path.join(mesh_folder, obj, obj) + mesh_filename_ending
+        #mesh_filename = os.path.join(mesh_folder, obj, obj) + mesh_filename_ending
+        mesh_filename = os.path.join(mesh_folder, obj, mesh_filename_ending)
         output_filename_raw = os.path.join(output_folder, obj) + ".xyz"
         output_filename_pcd = os.path.join(output_folder, obj) + "_pc.pcd"
         output_filename_off = os.path.join(output_folder, obj) + ".off"
@@ -76,8 +78,9 @@ def main(args):
 
         n_of_points = args.samples
 
-        points, points_camera_frame = renderMeshBackFaceCull(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
-        #points, points_camera_frame = renderMeshRayCast(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+        #points, points_camera_frame = renderMeshAll(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+        #points, points_camera_frame = renderMeshBackFaceCull(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+        points, points_camera_frame = renderMeshRayCast(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
 
 
         savePCNPtoPCD(points_camera_frame, output_filename_pcd)
