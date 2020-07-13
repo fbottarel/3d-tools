@@ -94,6 +94,8 @@ if __name__ == "__main__":
 
         mesh_name = pc_name
 
+        print('Loading ' + pc_name)
+
         # Read point cloud
 
         v = o3d.io.read_point_cloud(os.path.join(os.path.abspath(point_cloud_directory), pc_name) + point_cloud_format)
@@ -105,8 +107,8 @@ if __name__ == "__main__":
 
         # Change mesh vertices and faces color and set transparency
 
-        mesh.visual.face_colors[:] = np.array([255, 200, 200, 70])
-        mesh.visual.vertex_colors[:] = np.array([255, 200, 200, 70])
+        mesh.visual.face_colors[:] = np.array([255, 200, 200, 80])
+        mesh.visual.vertex_colors[:] = np.array([255, 200, 200, 80])
 
         # Rotate mesh and pc of a fixed amount
 
