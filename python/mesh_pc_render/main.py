@@ -61,9 +61,9 @@ def main(args):
         print("Processing object " + obj)
         #mesh_filename = os.path.join(mesh_folder, obj, obj) + mesh_filename_ending
         mesh_filename = os.path.join(mesh_folder, obj, mesh_filename_ending)
-        output_filename_raw = os.path.join(output_folder, obj) + ".xyz"
+        output_filename_raw = os.path.join(output_folder, obj) + "_pc.xyz"
         output_filename_pcd = os.path.join(output_folder, obj) + "_pc.pcd"
-        output_filename_off = os.path.join(output_folder, obj) + ".off"
+        output_filename_off = os.path.join(output_folder, obj) + "_pc.off"
 
         # Load the mesh
 
@@ -82,6 +82,30 @@ def main(args):
         #points, points_camera_frame = renderMeshBackFaceCull(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
         points, points_camera_frame = renderMeshRayCast(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
 
+        # Add noise if needed
+        if args.add_noise:
+ 
+            noise_mean = 0
+            noise_sigma_sq = 0.0000111
+            number_of_samples = 5
+
+            noise_mean_vector = np.ones((3)) * noise_mean
+            noise_cov_matrix = np.eye(3) * noise_sigma_sq
+
+            for idx_sample in range(number_of_samples):
+
+                # Perturb point cloud with additive gaussian noise
+                noise_samples = np.random.multivariate_normal(noise_mean_vector, noise_cov_matrix, points_camera_frame.shape[0])
+
+                noisy_output_filename_raw = os.path.join(output_folder, obj) + str(idx_sample).zfill(3) + "_pc.xyz"
+                noisy_output_filename_pcd = os.path.join(output_folder, obj) + str(idx_sample).zfill(3) + "_pc.pcd"
+                noisy_output_filename_off = os.path.join(output_folder, obj) + str(idx_sample).zfill(3) + "_pc.off"
+
+                points_camera_frame_noisy = points_camera_frame + noise_samples
+
+                # Save the noisy pcs
+                savePCNPtoPCD(points_camera_frame_noisy, noisy_output_filename_pcd)
+                savePCNPtoOFF(points_camera_frame_noisy, noisy_output_filename_off)
 
         savePCNPtoPCD(points_camera_frame, output_filename_pcd)
         savePCNPtoOFF(points_camera_frame, output_filename_off)
@@ -95,7 +119,8 @@ if __name__ == "__main__":
     argparser.add_argument('--z_away_mesh', dest='z_towards_mesh', action='store_false', default=False, help='Whether the Z axis of the camera must face away from the mesh')
     argparser.add_argument('--output_folder', dest='output_folder', type=str, default='./partial_pc', help='Root of the directory tree where the rendered point clouds will be stored')
     argparser.add_argument('--viewpoint', dest='viewpoint', nargs=3, type=float, default=[0.6, 0.6, 0.6], help='Origin point of the camera in cartesian coordinates. The Z axis will pass through this point and the mesh CoM')
-    argparser.add_argument('--samples', dest='samples', type=int, default=2000, help='Number of points to sample from the rendered mesh')
+    argparser.add_argument('--samples', dest='samples', type=int, default=3000, help='Number of points to sample from the rendered mesh')
+    argparser.add_argument('--noise', dest='add_noise', action='store_true', default=False, help='Add Gaussian noise to the point cloud')
 
     args = argparser.parse_args()
 
