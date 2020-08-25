@@ -188,7 +188,7 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh
     # Create a scene with the mesh and a camera pointing to it
 
     scene = mesh.scene()
-    scene.set_camera(resolution=[320,240],
+    scene.set_camera(resolution=[640,480],
                      fov=[60, 45],
                      angles=trimesh.transformations.euler_from_matrix(camera_transform_4x4, 'sxyz'),
                      center=mesh_centroid,
@@ -199,6 +199,12 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh
 
     # do the actual ray- mesh queries
     points, index_ray, index_tri = mesh.ray.intersects_location(origins, vectors, multiple_hits=False)
+
+    # downsample if necessary
+    # WARNING: THIS MESSES UP index_ray AND index_tri
+    if points.shape[0] > number_sampled_points:
+        choice = np.random.choice(points.shape[0], number_sampled_points, replace=False)
+        points = points[choice, :]
 
     # for each hit, find the distance along its vector
     # depth = trimesh.util.diagonal_dot(points - origins[0],
