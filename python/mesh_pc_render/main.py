@@ -8,7 +8,7 @@ import os
 import argparse
 
 from io_utils import savePCNPtoOFF, savePCNPtoPCD, savePCNPtoXYZ
-from renderers import renderMeshBackFaceCull, renderMeshRayCast, renderMeshAll
+from renderers import renderMeshBackFaceCull, renderMeshRayCast, renderMeshAll, renderMeshEGL
 
 # mesh_folder = "/home/fbottarel/workspace/docker-shared-workspace/shape-completion-ros/results/real_ycb_objects_results/meshes/holdout_models_holdout_views"
 # output_folder = "/home/fbottarel/workspace/docker-shared-workspace/shape-completion-ros/results/real_ycb_objects_results/completed_clouds"
@@ -18,6 +18,67 @@ from renderers import renderMeshBackFaceCull, renderMeshRayCast, renderMeshAll
 # camera_viewpoint = np.array([0.6, 0.6, 0.6])
 # NUMBER_SAMPLED_POINTS = 2000
 
+def render_object(obj, viewpoints, args, mesh_filename_ending, mesh_folder, output_folder):
+
+    print("Processing object " + obj)
+    mesh_filename = os.path.join(mesh_folder, obj, mesh_filename_ending)
+
+    # Load the mesh
+
+    mesh = trimesh.load(mesh_filename)
+
+    for idx_viewpoint in range(viewpoints.shape[0]):
+
+        # Parse camera viewpoint
+
+        camera_viewpoint = viewpoints[idx_viewpoint,:]
+        z_towards_mesh = args.z_towards_mesh
+
+        # Parse cardinality of the PC
+
+        n_of_points = args.samples
+
+        #points, points_camera_frame = renderMeshAll(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+        #points, points_camera_frame = renderMeshBackFaceCull(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+        #points, points_camera_frame = renderMeshRayCast(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+        points, points_camera_frame = renderMeshEGL(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+
+        # Add noise if needed
+
+        if args.add_noise:
+
+            noise_mean = 0
+            noise_sigma_sq = 0.0000111
+            number_of_samples = 5
+
+            noise_mean_vector = np.ones((3)) * noise_mean
+            noise_cov_matrix = np.eye(3) * noise_sigma_sq
+
+            for idx_sample in range(number_of_samples):
+
+                # Perturb point cloud with additive gaussian noise
+                noise_samples = np.random.multivariate_normal(noise_mean_vector, noise_cov_matrix, points_camera_frame.shape[0])
+
+                noisy_output_filename_raw = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.xyz"
+                noisy_output_filename_pcd = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.pcd"
+                noisy_output_filename_off = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.off"
+
+                points_camera_frame_noisy = points_camera_frame + noise_samples
+
+                # Save the noisy pcs
+                savePCNPtoPCD(points_camera_frame_noisy, noisy_output_filename_pcd)
+                savePCNPtoOFF(points_camera_frame_noisy, noisy_output_filename_off)
+
+        else:
+
+            # Save the non-noisy pcs
+
+            output_filename_raw = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.xyz"
+            output_filename_pcd = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.pcd"
+            output_filename_off = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.off"
+
+            savePCNPtoPCD(points_camera_frame, output_filename_pcd)
+            savePCNPtoOFF(points_camera_frame, output_filename_off)
 
 def main(args):
 
@@ -47,7 +108,7 @@ def main(args):
 
     if os.path.isdir(mesh_folder):
         object_dirlist = os.listdir(mesh_folder)
-    
+
     output_folder = args.output_folder
 
     if not os.path.isdir(output_folder):
@@ -57,12 +118,12 @@ def main(args):
     # mesh_filename_ending = "_mean_shape.ply"
 
     # If required, sample a bunch of viewpoints
-    
+
     viewpoints = np.empty((0,3), float)
-    
+
     if args.multiview:
 
-        number_of_viewpoints = 10
+        number_of_viewpoints = 50
 
         # Sample a bunch of points on a sphere
 
@@ -80,69 +141,87 @@ def main(args):
 
     else:
 
-        viewpoints = np.append(viewpoints, np.array(args.viewpoint), axis=0)     
+        viewpoints = np.append(viewpoints, np.reshape(np.array(args.viewpoint), (1,3)), axis=0)
 
-    for obj in object_dirlist:
+    # Let's try the parallel approach
 
-        print("Processing object " + obj)
-        #mesh_filename = os.path.join(mesh_folder, obj, obj) + mesh_filename_ending
-        mesh_filename = os.path.join(mesh_folder, obj, mesh_filename_ending)
+    import multiprocessing
+    from joblib import Parallel, delayed
+    from tqdm import tqdm
 
-        # Load the mesh
+    # num_cores = multiprocessing.cpu_count()
+    num_cores = 1
+    obj_dirlist = tqdm(object_dirlist)
 
-        mesh = trimesh.load(mesh_filename)
+    Parallel(n_jobs=num_cores)(delayed(render_object)(obj,
+                                                    viewpoints,
+                                                    args,
+                                                    mesh_filename_ending,
+                                                    mesh_folder,
+                                                    output_folder)
+                                                    for obj in obj_dirlist)
 
-        for idx_viewpoint in range(viewpoints.shape[0]):
+    # for obj in object_dirlist:
 
-            # Parse camera viewpoint
+    #     print("Processing object " + obj)
+    #     #mesh_filename = os.path.join(mesh_folder, obj, obj) + mesh_filename_ending
+    #     mesh_filename = os.path.join(mesh_folder, obj, mesh_filename_ending)
 
-            camera_viewpoint = viewpoints[idx_viewpoint,:]
-            z_towards_mesh = args.z_towards_mesh
+    #     # Load the mesh
 
-            # Parse cardinality of the PC
+    #     mesh = trimesh.load(mesh_filename)
 
-            n_of_points = args.samples
+    #     for idx_viewpoint in range(viewpoints.shape[0]):
 
-            #points, points_camera_frame = renderMeshAll(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
-            #points, points_camera_frame = renderMeshBackFaceCull(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
-            points, points_camera_frame = renderMeshRayCast(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+    #         # Parse camera viewpoint
 
-            # Add noise if needed
+    #         camera_viewpoint = viewpoints[idx_viewpoint,:]
+    #         z_towards_mesh = args.z_towards_mesh
 
-            if args.add_noise:
-    
-                noise_mean = 0
-                noise_sigma_sq = 0.0000111
-                number_of_samples = 5
+    #         # Parse cardinality of the PC
 
-                noise_mean_vector = np.ones((3)) * noise_mean
-                noise_cov_matrix = np.eye(3) * noise_sigma_sq
+    #         n_of_points = args.samples
 
-                for idx_sample in range(number_of_samples):
+    #         #points, points_camera_frame = renderMeshAll(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+    #         #points, points_camera_frame = renderMeshBackFaceCull(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
+    #         points, points_camera_frame = renderMeshRayCast(mesh, camera_viewpoint, n_of_points, z_towards_mesh)
 
-                    # Perturb point cloud with additive gaussian noise
-                    noise_samples = np.random.multivariate_normal(noise_mean_vector, noise_cov_matrix, points_camera_frame.shape[0])
+    #         # Add noise if needed
 
-                    noisy_output_filename_raw = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.xyz"
-                    noisy_output_filename_pcd = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.pcd"
-                    noisy_output_filename_off = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.off"
+    #         if args.add_noise:
 
-                    points_camera_frame_noisy = points_camera_frame + noise_samples
+    #             noise_mean = 0
+    #             noise_sigma_sq = 0.0000111
+    #             number_of_samples = 5
 
-                    # Save the noisy pcs
-                    savePCNPtoPCD(points_camera_frame_noisy, noisy_output_filename_pcd)
-                    savePCNPtoOFF(points_camera_frame_noisy, noisy_output_filename_off)
-            
-            else: 
+    #             noise_mean_vector = np.ones((3)) * noise_mean
+    #             noise_cov_matrix = np.eye(3) * noise_sigma_sq
 
-                # Save the non-noisy pcs
+    #             for idx_sample in range(number_of_samples):
 
-                output_filename_raw = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.xyz"
-                output_filename_pcd = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.pcd"
-                output_filename_off = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.off"
-                
-                savePCNPtoPCD(points_camera_frame, output_filename_pcd)
-                savePCNPtoOFF(points_camera_frame, output_filename_off)
+    #                 # Perturb point cloud with additive gaussian noise
+    #                 noise_samples = np.random.multivariate_normal(noise_mean_vector, noise_cov_matrix, points_camera_frame.shape[0])
+
+    #                 noisy_output_filename_raw = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.xyz"
+    #                 noisy_output_filename_pcd = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.pcd"
+    #                 noisy_output_filename_off = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + '_' + str(idx_sample).zfill(3) + "_pc.off"
+
+    #                 points_camera_frame_noisy = points_camera_frame + noise_samples
+
+    #                 # Save the noisy pcs
+    #                 savePCNPtoPCD(points_camera_frame_noisy, noisy_output_filename_pcd)
+    #                 savePCNPtoOFF(points_camera_frame_noisy, noisy_output_filename_off)
+
+    #         else:
+
+    #             # Save the non-noisy pcs
+
+    #             output_filename_raw = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.xyz"
+    #             output_filename_pcd = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.pcd"
+    #             output_filename_off = os.path.join(output_folder, obj) + '_' + str(idx_viewpoint).zfill(4) + "_pc.off"
+
+    #             savePCNPtoPCD(points_camera_frame, output_filename_pcd)
+    #             savePCNPtoOFF(points_camera_frame, output_filename_off)
 
 if __name__ == "__main__":
 
@@ -152,7 +231,7 @@ if __name__ == "__main__":
     argparser.add_argument('--z_towards_mesh', dest='z_towards_mesh', action='store_true', default=True, help='Whether the Z axis of the camera must be directed at the mesh')
     argparser.add_argument('--z_away_mesh', dest='z_towards_mesh', action='store_false', default=False, help='Whether the Z axis of the camera must face away from the mesh')
     argparser.add_argument('--output_folder', dest='output_folder', type=str, default='./partial_pc', help='Root of the directory tree where the rendered point clouds will be stored')
-    argparser.add_argument('--viewpoint', dest='viewpoint', nargs=3, type=float, default=[0.6, 0.6, 0.6], help='Origin point of the camera in cartesian coordinates. The Z axis will pass through this point and the mesh CoM')
+    argparser.add_argument('--viewpoint', dest='viewpoint', nargs=3, type=float, default=[0.4, 0.4, 0.4], help='Origin point of the camera in cartesian coordinates. The Z axis will pass through this point and the mesh CoM')
     argparser.add_argument('--multi_view', dest='multiview', action='store_true', default=False, help='Will sample point clouds from multiple points of view. Distance from the CoM is the same as viewpoint')
     argparser.add_argument('--samples', dest='samples', type=int, default=3000, help='Number of points to sample from the rendered mesh')
     argparser.add_argument('--noise', dest='add_noise', action='store_true', default=False, help='Add Gaussian noise to the point cloud')
