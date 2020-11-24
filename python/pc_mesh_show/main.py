@@ -1,4 +1,4 @@
-"""This script is supposed to show a point cloud and a mesh of the same object, 
+"""This script is supposed to show a point cloud and a mesh of the same object,
 overlaying them with a transparency value.
 The script will look for a mesh file and point cloud with the same name.
 """
@@ -107,8 +107,8 @@ if __name__ == "__main__":
 
         # Change mesh vertices and faces color and set transparency
 
-        mesh.visual.face_colors[:] = np.array([255, 200, 200, 80])
-        mesh.visual.vertex_colors[:] = np.array([255, 200, 200, 80])
+        mesh.visual.face_colors[:] = np.array([255, 50, 50, 80])
+        mesh.visual.vertex_colors[:] = np.array([255, 50, 50, 80])
 
         # Rotate mesh and pc of a fixed amount
 
@@ -117,6 +117,6 @@ if __name__ == "__main__":
         pc.apply_transform(transform)
 
         # Show the pc and mesh
-        
+
         scene = trimesh.Scene([pc, mesh])
         scene.show(callback=rotation_callback)
