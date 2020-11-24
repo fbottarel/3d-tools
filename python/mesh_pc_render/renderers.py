@@ -148,6 +148,7 @@ def renderMeshEGL(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=Tru
     """
     Renders a number of points on a mesh from a viewpoint, considering occlusion.
     Faces not in sight are detected by casting rays from a camera viewpoint.
+    Uses EGL hardware acceleration.
 
     Parameters
     ----------
@@ -184,7 +185,6 @@ def renderMeshEGL(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=Tru
     fx = fy = width / 2.0 / np.tan(fov / 2.0)
     cx = width / 2.0
     cy = height / 2.0
-    # camera = pyrender.PerspectiveCamera(yfov=fov)
     camera = pyrender.IntrinsicsCamera(fx=fx, fy=fy, cx=cx, cy=cy)
 
     # z axis is the ray from the mesh center to the camera axis center
@@ -213,39 +213,15 @@ def renderMeshEGL(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=Tru
     r = pyrender.OffscreenRenderer(width, height)
     color, depth = r.render(scene)
 
-    # Show the images
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.subplot(1,2,1)
-    # plt.axis('off')
-    # plt.imshow(color)
-    # plt.subplot(1,2,2)
-    # plt.axis('off')
-    # plt.imshow(depth, cmap=plt.cm.gray_r)
-    # plt.show()
-
-    # Transform to point cloud
-    # fy = fx = 0.5 / np.tan(fov * 0.5)
-    # height = depth.shape[0]
-    # width = depth.shape[1]
-    # mask = np.where(depth > 0)
-    # x = mask[1]
-    # y = mask[0]
-    # normalized_x = (x.astype(np.float32) - width * 0.5) / width
-    # normalized_y = (y.astype(np.float32) - height * 0.5) / height
-    # world_x = normalized_x * depth[y, x] / fx
-    # world_y = normalized_y * depth[y, x] / fy
-    # world_z = depth[y, x]
-
-    # points = np.vstack((world_x, world_y, world_z))
-
+    # Clip off depth values where there's nothing
     mask = np.where(depth > 0)
     x = mask[1]
     y = mask[0]
+
+    # Compute coordinates given depth and image pixel coordinates
     points_x = (x.astype(np.float32) - cx) / fx * depth[y,x]
     points_y = (y.astype(np.float32) - cy) / fy * depth[y,x]
     points_z = depth[y,x]
-
     points_camera_frame = np.vstack((points_x, points_y, points_z)).T
 
     # Downsample if necessary
@@ -253,9 +229,8 @@ def renderMeshEGL(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh=Tru
         choice = np.random.choice(points_camera_frame.shape[0], number_sampled_points, replace=False)
         points_camera_frame = points_camera_frame[choice, :]
 
-    points_cam_homogeneous = np.hstack((points_camera_frame, np.ones((points_camera_frame.shape[0],1), dtype=np.float32)))
-
     # Obtain point coordinates in the object-centric ref system
+    points_cam_homogeneous = np.hstack((points_camera_frame, np.ones((points_camera_frame.shape[0],1), dtype=np.float32)))
     points_world_frame_homogeneous = np.transpose(np.matmul(np.linalg.inv(camera_transform_4x4), np.transpose(points_cam_homogeneous)))
     points_world_frame = points_world_frame_homogeneous[:, 0:3]
 
@@ -265,6 +240,7 @@ def renderMeshRayCast(mesh, cam_viewpoint, number_sampled_points, z_towards_mesh
     """
     Renders a number of points on a mesh from a viewpoint, considering occlusion.
     Faces not in sight are detected by casting rays from a camera viewpoint.
+    Use pyembree for speedup.
 
     Parameters
     ----------
