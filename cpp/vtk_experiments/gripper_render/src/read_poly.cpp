@@ -32,16 +32,7 @@
 
 #include <array>
 
-// vtkSmartPointer<vtkPolyData> ReadPolyData(std::string const& fileName);
-
-/**
- * @brief Load a mesh geometry into a PolyData object, supports different
- * mesh file formats.
- *
- * @param fileName input mesh filename
- * @return vtkSmartPointer<vtkPolyData>
- */
-vtkSmartPointer<vtkPolyData> ReadPolyData(std::string const& fileName)
+vtkSmartPointer<vtkPolyData> readPolyData(std::string const& fileName)
 {
   vtkSmartPointer<vtkPolyData> polyData;
   std::string extension = "";

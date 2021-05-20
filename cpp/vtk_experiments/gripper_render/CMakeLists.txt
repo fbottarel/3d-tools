@@ -35,11 +35,7 @@ find_package(VTK COMPONENTS
 )
 message (STATUS "VTK_VERSION: ${VTK_VERSION}")
 
-
-
-# Process the executable
+# Process the executables
 include(${VTK_USE_FILE})
-add_executable(gripper_render src/main.cpp)
-target_link_libraries(gripper_render ${urdfdom_LIBRARIES}
-    Eigen3::Eigen
-    ${VTK_LIBRARIES})
+include_directories(include)
+add_subdirectory(src)

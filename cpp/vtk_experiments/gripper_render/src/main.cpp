@@ -8,8 +8,7 @@
 #include <fstream>
 #include <stdio.h>
 
-// Including cpp files is discouraged...
-#include "read_poly.cpp"
+#include "read_poly.h"
 
 /// Check for file existence
 bool fileExists(const std::string filename);
@@ -43,11 +42,49 @@ int main(int argc, char const *argv[])
     std::cout << "Robot name: \t\t" << gripper_urdf_model->getName() << std::endl;
     std::cout << "Root node name: \t" << gripper_urdf_model->getRoot()->name << std::endl;
 
-    // Explore the tree
+    // Explore the tree as a sanity test
     std::cout << "Joints:" << std::endl;
     printChildrenJointsLinks(gripper_urdf_model->getRoot()->name, gripper_urdf_model);
 
-    return 0;
+    // Try to load the mesh
+    vtkSmartPointer<vtkPolyData> mesh_polydata = readPolyData("meshes/visual/hand.stl");
+
+    // Display the mesh
+    // TEMPORARY
+    // TODO: do a gripper_render class with all that's needed to load meshes and render them in the proper position
+    std::string mesh_color = "SlateGray";
+    std::string background_color = "MidnightBlue";
+    vtkNew<vtkNamedColors> colors;
+    vtkNew<vtkActor> mesh_actor;
+    vtkNew<vtkPolyDataMapper> mesh_mapper;
+    mesh_mapper->SetInputData(mesh_polydata);
+    mesh_actor->SetMapper(mesh_mapper);
+    mesh_actor->SetOrigin(0,0,0);
+    mesh_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
+    vtkNew<vtkAxesActor> axes_actor;
+    axes_actor->SetTotalLength(0.1,0.1,0.1);
+    axes_actor->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(5);
+    axes_actor->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(5);
+    axes_actor->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(5);
+    axes_actor->SetOrigin(0,0,0);
+    vtkNew<vtkRenderer> renderer;
+    renderer->AddActor(axes_actor);
+    renderer->AddActor(mesh_actor);
+    renderer->SetBackground(colors->GetColor3d(background_color).GetData());
+    vtkNew<vtkRenderWindow> render_window;
+    render_window->SetSize(600, 600);
+    render_window->AddRenderer(renderer);
+    render_window->SetWindowName("Basic render");
+    vtkNew<vtkRenderWindowInteractor> interactor;
+    interactor->SetRenderWindow(render_window);
+    vtkNew<vtkInteractorStyleTrackballCamera> style;
+    interactor->SetInteractorStyle(style);
+    render_window->Render();
+    interactor->Initialize();
+    interactor->Start();
+
+    return EXIT_SUCCESS;
+
 }
 
 /// Check for file existence
