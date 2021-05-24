@@ -1,3 +1,24 @@
+#include <vtkActor.h>
+#include <vtkAxesActor.h>
+#include <vtkCaptionActor2D.h>
+#include <vtkTextActor.h>
+#include <vtkTextProperty.h>
+#include <vtkCamera.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkPolyDataReader.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkRenderer.h>
+#include <vtkSmartPointer.h>
+
+#include <vtkPolyData.h>
+#include <vtkSphereSource.h>
+
+
 #include <urdf_model/model.h>
 #include <urdf_model/pose.h>
 #include <urdf_parser/urdf_parser.h>
@@ -8,13 +29,9 @@
 #include <fstream>
 #include <stdio.h>
 
-#include "read_poly.h"
+#include "object_mesh.h"
 
-/// Check for file existence
-bool fileExists(const std::string filename);
-
-/// Pose to Eigen matrix
-Eigen::Matrix4f getHomogeneousTransform(const urdf::Pose &pose);
+#include "utils.h"
 
 /// Print joints and links related to a link (recursively)
 void printChildrenJointsLinks(const std::string link_name, const urdf::ModelInterfaceSharedPtr model);
@@ -47,20 +64,41 @@ int main(int argc, char const *argv[])
     printChildrenJointsLinks(gripper_urdf_model->getRoot()->name, gripper_urdf_model);
 
     // Try to load the mesh
-    vtkSmartPointer<vtkPolyData> mesh_polydata = readPolyData("meshes/visual/hand.stl");
+    vtkSmartPointer<vtkPolyData> hand_polydata = readPolyDataFromFile("meshes/visual/hand.stl");
+    vtkSmartPointer<vtkPolyData> finger_polydata = readPolyDataFromFile("meshes/visual/finger.stl");
 
     // Display the mesh
     // TEMPORARY
-    // TODO: do a gripper_render class with all that's needed to load meshes and render them in the proper position
+    // TODO: do a gripper_render class with all that's needed
+    // to load meshes and render them in the proper position
     std::string mesh_color = "SlateGray";
     std::string background_color = "MidnightBlue";
     vtkNew<vtkNamedColors> colors;
+
     vtkNew<vtkActor> mesh_actor;
     vtkNew<vtkPolyDataMapper> mesh_mapper;
-    mesh_mapper->SetInputData(mesh_polydata);
+    mesh_mapper->SetInputData(hand_polydata);
     mesh_actor->SetMapper(mesh_mapper);
     mesh_actor->SetOrigin(0,0,0);
     mesh_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
+
+    vtkNew<vtkActor> mesh2_actor;
+    vtkNew<vtkPolyDataMapper> mesh2_mapper;
+    mesh2_mapper->SetInputData(finger_polydata);
+    mesh2_actor->SetMapper(mesh2_mapper);
+    mesh2_actor->SetOrigin(0,0,0);
+    mesh2_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
+    mesh2_actor->SetPosition(0.0,0.0,0.06);
+
+    vtkNew<vtkActor> mesh3_actor;
+    vtkNew<vtkPolyDataMapper> mesh3_mapper;
+    mesh3_mapper->SetInputData(finger_polydata);
+    mesh3_actor->SetMapper(mesh3_mapper);
+    mesh3_actor->SetOrigin(0,0,0);
+    mesh3_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
+    mesh3_actor->SetPosition(0.0,0.0,0.06);
+    mesh3_actor->SetOrientation(0,0,180);
+
     vtkNew<vtkAxesActor> axes_actor;
     axes_actor->SetTotalLength(0.1,0.1,0.1);
     axes_actor->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(5);
@@ -69,7 +107,27 @@ int main(int argc, char const *argv[])
     axes_actor->SetOrigin(0,0,0);
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(axes_actor);
-    renderer->AddActor(mesh_actor);
+
+    ObjectMesh hand(std::string("meshes/visual/hand.stl"));
+    Eigen::Matrix4f tmp_mat;
+    tmp_mat.setIdentity();
+    hand.setObjectTransform(tmp_mat);
+    renderer->AddActor(hand.getObjectActor());
+
+    ObjectMesh finger_1("meshes/visual/finger.stl");
+    tmp_mat.setIdentity();
+    tmp_mat(2,3) = 0.06;
+    tmp_mat.block<2,2>(0,0) << -1, 0, 0, -1;
+    finger_1.setObjectTransform(tmp_mat);
+    renderer->AddActor(finger_1.getObjectActor());
+
+    ObjectMesh finger_2("meshes/visual/finger.stl");
+    tmp_mat.setIdentity();
+    tmp_mat(2,3) = 0.06;
+    // tmp_mat.block<2,2>(0,0) << 0, -1, 1.1, 0;
+    finger_2.setObjectTransform(tmp_mat);
+    renderer->AddActor(finger_2.getObjectActor());
+
     renderer->SetBackground(colors->GetColor3d(background_color).GetData());
     vtkNew<vtkRenderWindow> render_window;
     render_window->SetSize(600, 600);
@@ -85,32 +143,6 @@ int main(int argc, char const *argv[])
 
     return EXIT_SUCCESS;
 
-}
-
-/// Check for file existence
-bool fileExists(const std::string filename)
-{
-    std::ifstream filestream(filename);
-    return filestream.good();
-}
-
-/// Pose to Eigen matrix
-Eigen::Matrix4f getHomogeneousTransform(const urdf::Pose &pose)
-{
-    Eigen::Quaternion<float> rotation_quat(pose.rotation.w,
-                                           pose.rotation.x,
-                                           pose.rotation.y,
-                                           pose.rotation.z);
-
-    Eigen::Matrix3f rotation;
-    Eigen::Vector3f translation(pose.position.x, pose.position.y, pose.position.z);
-
-    Eigen::Matrix4f transformation;
-    transformation.setIdentity();
-    transformation.block<3,3>(0,0) = rotation;
-    transformation.block<3,1>(0,3) = translation;
-
-    return transformation;
 }
 
 /// Print joints and links related to a link (recursively)
