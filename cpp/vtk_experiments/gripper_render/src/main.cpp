@@ -30,8 +30,9 @@
 #include <stdio.h>
 
 #include "object_mesh.h"
-
 #include "utils.h"
+#include "link.h"
+
 
 /// Print joints and links related to a link (recursively)
 void printChildrenJointsLinks(const std::string link_name, const urdf::ModelInterfaceSharedPtr model);
@@ -71,33 +72,8 @@ int main(int argc, char const *argv[])
     // TEMPORARY
     // TODO: do a gripper_render class with all that's needed
     // to load meshes and render them in the proper position
-    std::string mesh_color = "SlateGray";
     std::string background_color = "MidnightBlue";
     vtkNew<vtkNamedColors> colors;
-
-    vtkNew<vtkActor> mesh_actor;
-    vtkNew<vtkPolyDataMapper> mesh_mapper;
-    mesh_mapper->SetInputData(hand_polydata);
-    mesh_actor->SetMapper(mesh_mapper);
-    mesh_actor->SetOrigin(0,0,0);
-    mesh_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
-
-    vtkNew<vtkActor> mesh2_actor;
-    vtkNew<vtkPolyDataMapper> mesh2_mapper;
-    mesh2_mapper->SetInputData(finger_polydata);
-    mesh2_actor->SetMapper(mesh2_mapper);
-    mesh2_actor->SetOrigin(0,0,0);
-    mesh2_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
-    mesh2_actor->SetPosition(0.0,0.0,0.06);
-
-    vtkNew<vtkActor> mesh3_actor;
-    vtkNew<vtkPolyDataMapper> mesh3_mapper;
-    mesh3_mapper->SetInputData(finger_polydata);
-    mesh3_actor->SetMapper(mesh3_mapper);
-    mesh3_actor->SetOrigin(0,0,0);
-    mesh3_actor->GetProperty()->SetColor(colors->GetColor3d(mesh_color).GetData());
-    mesh3_actor->SetPosition(0.0,0.0,0.06);
-    mesh3_actor->SetOrientation(0,0,180);
 
     vtkNew<vtkAxesActor> axes_actor;
     axes_actor->SetTotalLength(0.1,0.1,0.1);
@@ -108,23 +84,22 @@ int main(int argc, char const *argv[])
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(axes_actor);
 
-    ObjectMesh hand(std::string("meshes/visual/hand.stl"));
+    mev::ObjectMesh hand(std::string("meshes/visual/hand.stl"));
     Eigen::Matrix4f tmp_mat;
     tmp_mat.setIdentity();
     hand.setObjectTransform(tmp_mat);
     renderer->AddActor(hand.getObjectActor());
 
-    ObjectMesh finger_1("meshes/visual/finger.stl");
+    mev::ObjectMesh finger_1("meshes/visual/finger.stl");
     tmp_mat.setIdentity();
     tmp_mat(2,3) = 0.06;
     tmp_mat.block<2,2>(0,0) << -1, 0, 0, -1;
     finger_1.setObjectTransform(tmp_mat);
     renderer->AddActor(finger_1.getObjectActor());
 
-    ObjectMesh finger_2("meshes/visual/finger.stl");
+    mev::ObjectMesh finger_2("meshes/visual/finger.stl");
     tmp_mat.setIdentity();
     tmp_mat(2,3) = 0.06;
-    // tmp_mat.block<2,2>(0,0) << 0, -1, 1.1, 0;
     finger_2.setObjectTransform(tmp_mat);
     renderer->AddActor(finger_2.getObjectActor());
 
