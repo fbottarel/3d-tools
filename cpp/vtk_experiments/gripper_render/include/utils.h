@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <fstream>
 
 #include <urdf_model/pose.h>
@@ -23,3 +26,5 @@ Eigen::Matrix4f getHomogeneousTransform(const urdf::Pose &pose);
 
 /// Read mesh from file
 vtkSmartPointer<vtkPolyData> readPolyDataFromFile(std::string const& mesh_path);
+
+#endif
