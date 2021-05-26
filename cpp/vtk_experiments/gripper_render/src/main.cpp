@@ -32,6 +32,7 @@
 #include "object_mesh.h"
 #include "utils.h"
 #include "link.h"
+#include "visual_geometry.h"
 
 
 /// Print joints and links related to a link (recursively)
@@ -84,24 +85,24 @@ int main(int argc, char const *argv[])
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(axes_actor);
 
-    mev::ObjectMesh hand(std::string("meshes/visual/hand.stl"));
+    mev::VisualGeometry hand(std::string("meshes/visual/hand.stl"));
     Eigen::Matrix4f tmp_mat;
     tmp_mat.setIdentity();
-    hand.setObjectTransform(tmp_mat);
-    renderer->AddActor(hand.getObjectActor());
+    hand.setGeometryWorldPose(tmp_mat);
+    renderer->AddActor(hand.getGeometryActor());
 
-    mev::ObjectMesh finger_1("meshes/visual/finger.stl");
+    mev::VisualGeometry finger_1("meshes/visual/finger.stl");
     tmp_mat.setIdentity();
     tmp_mat(2,3) = 0.06;
     tmp_mat.block<2,2>(0,0) << -1, 0, 0, -1;
-    finger_1.setObjectTransform(tmp_mat);
-    renderer->AddActor(finger_1.getObjectActor());
+    finger_1.setGeometryWorldPose(tmp_mat);
+    renderer->AddActor(finger_1.getGeometryActor());
 
-    mev::ObjectMesh finger_2("meshes/visual/finger.stl");
+    mev::VisualGeometry finger_2("meshes/visual/finger.stl");
     tmp_mat.setIdentity();
     tmp_mat(2,3) = 0.06;
-    finger_2.setObjectTransform(tmp_mat);
-    renderer->AddActor(finger_2.getObjectActor());
+    finger_2.setGeometryWorldPose(tmp_mat);
+    renderer->AddActor(finger_2.getGeometryActor());
 
     renderer->SetBackground(colors->GetColor3d(background_color).GetData());
     vtkNew<vtkRenderWindow> render_window;
