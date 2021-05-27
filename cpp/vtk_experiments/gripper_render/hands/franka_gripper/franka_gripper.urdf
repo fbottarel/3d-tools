@@ -7,7 +7,7 @@
   <link name="panda_hand">
     <visual>
       <geometry>
-        <mesh filename="meshes/visual/hand.dae"/>
+        <mesh filename="meshes/visual/hand.stl"/>
       </geometry>
     </visual>
     <collision>
@@ -50,7 +50,7 @@
   <link name="panda_leftfinger">
     <visual>
       <geometry>
-        <mesh filename="meshes/visual/finger.dae"/>
+        <mesh filename="meshes/visual/finger.stl"/>
       </geometry>
     </visual>
   </link>
@@ -58,7 +58,7 @@
     <visual>
       <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="meshes/visual/finger.dae"/>
+        <mesh filename="meshes/visual/finger.stl"/>
       </geometry>
     </visual>
   </link>
