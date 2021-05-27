@@ -55,8 +55,8 @@ namespace mev
         return geometry_actor;
     }
 
-    URDFVisualGeometry::URDFVisualGeometry(const urdf::Mesh& urdf_geometry)
-    : VisualGeometry(urdf_geometry.filename),
+    URDFVisualGeometry::URDFVisualGeometry(urdf::MeshSharedPtr urdf_geometry)
+    : VisualGeometry(urdf_geometry->filename),
       urdf_geometry{urdf_geometry}
     {
     }

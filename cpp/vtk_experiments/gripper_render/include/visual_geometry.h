@@ -35,7 +35,7 @@ namespace mev
         Eigen::Matrix4f geometry_world_pose;
 
         vtkSmartPointer<vtkPolyData> geometry_polydata;
-        vtkNew<vtkPolyDataMapper> geometry_mapper;
+        vtkNew<vtkPolyDataMapper> geometry_mapper; // shared pointer and then initialize in constructor
         vtkNew<vtkActor> geometry_actor;
 
         VisualGeometry(const std::string& path = "",
@@ -48,9 +48,9 @@ namespace mev
     {
         public:
 
-        urdf::Mesh urdf_geometry;
+        urdf::MeshSharedPtr urdf_geometry;
 
-        URDFVisualGeometry(const urdf::Mesh& urdf_geometry);
+        URDFVisualGeometry(urdf::MeshSharedPtr urdf_geometry);
     };
 
 }

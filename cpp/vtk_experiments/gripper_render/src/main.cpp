@@ -29,7 +29,6 @@
 #include <fstream>
 #include <stdio.h>
 
-#include "object_mesh.h"
 #include "utils.h"
 #include "link.h"
 #include "visual_geometry.h"
@@ -85,24 +84,28 @@ int main(int argc, char const *argv[])
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(axes_actor);
 
-    mev::VisualGeometry hand(std::string("meshes/visual/hand.stl"));
-    Eigen::Matrix4f tmp_mat;
-    tmp_mat.setIdentity();
-    hand.setGeometryWorldPose(tmp_mat);
-    renderer->AddActor(hand.getGeometryActor());
+    urdf::LinkConstSharedPtr hand_link = gripper_urdf_model->getLink("panda_hand");
+    urdf::LinkConstSharedPtr finger_left_link = gripper_urdf_model->getLink("panda_leftfinger");
+    urdf::LinkConstSharedPtr finger_right_link = gripper_urdf_model->getLink("panda_rightfinger");
 
-    mev::VisualGeometry finger_1("meshes/visual/finger.stl");
-    tmp_mat.setIdentity();
-    tmp_mat(2,3) = 0.06;
-    tmp_mat.block<2,2>(0,0) << -1, 0, 0, -1;
-    finger_1.setGeometryWorldPose(tmp_mat);
-    renderer->AddActor(finger_1.getGeometryActor());
+    Eigen::Matrix4f hand_tf(Eigen::Matrix4f::Identity());
+    Eigen::Matrix4f finger_right_tf(hand_tf);
+    finger_right_tf(2,3) = 0.06;
+    Eigen::Matrix4f finger_left_tf(finger_right_tf);
+    finger_left_tf.block<2,2>(0,0) << -1, 0, 0, -1;
 
-    mev::VisualGeometry finger_2("meshes/visual/finger.stl");
-    tmp_mat.setIdentity();
-    tmp_mat(2,3) = 0.06;
-    finger_2.setGeometryWorldPose(tmp_mat);
-    renderer->AddActor(finger_2.getGeometryActor());
+    // Dynamic casting is necessary since the urdf parsed model points to a parent class of urdf::Mesh
+    mev::URDFVisualGeometry hand_geom(std::dynamic_pointer_cast<urdf::Mesh>(hand_link->visual->geometry));
+    mev::URDFVisualGeometry finger_left_geom(std::dynamic_pointer_cast<urdf::Mesh>(finger_left_link->visual->geometry));
+    mev::URDFVisualGeometry finger_right_geom(std::dynamic_pointer_cast<urdf::Mesh>(finger_right_link->visual->geometry));
+
+    hand_geom.setGeometryWorldPose(hand_tf);
+    finger_left_geom.setGeometryWorldPose(finger_left_tf);
+    finger_right_geom.setGeometryWorldPose(finger_right_tf);
+
+    renderer->AddActor(hand_geom.getGeometryActor());
+    renderer->AddActor(finger_right_geom.getGeometryActor());
+    renderer->AddActor(finger_left_geom.getGeometryActor());
 
     renderer->SetBackground(colors->GetColor3d(background_color).GetData());
     vtkNew<vtkRenderWindow> render_window;
