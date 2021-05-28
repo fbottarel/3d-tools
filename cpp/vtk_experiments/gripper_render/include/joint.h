@@ -4,10 +4,10 @@
 #include <fstream>
 
 #include "utils.h"
-#include "object_mesh.h"
-// #include "link.h"
+#include "link.h"
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <urdf_model/model.h>
 #include <urdf_model/pose.h>
@@ -17,9 +17,9 @@ namespace mev
 {
     class Link;
 
-    enum JointType { revolute,
-                    prismatic,
-                    fixed};
+    enum JointType { JOINT_REVOLUTE,
+                     JOINT_PRISMATIC,
+                     JOINT_FIXED};
 
     class Joint
     {
@@ -30,10 +30,21 @@ namespace mev
 
         mev::JointType type;
 
-        double joint_value;
-        Eigen::Matrix4f joint_ref_frame;
-        Eigen::Matrix3f joint_axis;
+        float joint_value;
+        Eigen::Matrix4f parent_to_joint_ref_frame;
+        Eigen::Vector3f joint_axis;
 
+        public:
+
+        Joint();
+        Joint(urdf::JointConstSharedPtr urdf_joint);
+        void setLinks(std::shared_ptr<Link> parent_link, std::shared_ptr<Link> child_link);
+        void setJointType(JointType type);
+        // void setJointAxis(Eigen::Matrix3f& joint_axis);
+        void setJointAxis(const Eigen::Vector3f& joint_axis);
+        void setJointRefFrame(const Eigen::Matrix4f& joint_reference_frame);
+        void setJointValue(const float& joint_value);
+        Eigen::Matrix4f getJointTransform();
     };
 }
 #endif
