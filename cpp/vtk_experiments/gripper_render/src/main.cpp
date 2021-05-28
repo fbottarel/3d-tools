@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include "utils.h"
+#include "joint.h"
 #include "link.h"
 #include "visual_geometry.h"
 
@@ -69,9 +70,6 @@ int main(int argc, char const *argv[])
     vtkSmartPointer<vtkPolyData> finger_polydata = readPolyDataFromFile("meshes/visual/finger.stl");
 
     // Display the mesh
-    // TEMPORARY
-    // TODO: do a gripper_render class with all that's needed
-    // to load meshes and render them in the proper position
     std::string background_color = "MidnightBlue";
     vtkNew<vtkNamedColors> colors;
 
@@ -119,6 +117,15 @@ int main(int argc, char const *argv[])
     render_window->Render();
     interactor->Initialize();
     interactor->Start();
+
+    std::shared_ptr<mev::Link> root_link = std::make_shared<mev::Link> (hand_link);
+    for (auto current_link : hand_link->child_links)
+    {
+        // create the link
+        std::cout << "Adding child link " << current_link->name << std::endl;
+        std::shared_ptr<mev::Link> child = std::make_shared<mev::Link> (current_link, root_link);
+        root_link->addChildLink(child);
+    }
 
     return EXIT_SUCCESS;
 
