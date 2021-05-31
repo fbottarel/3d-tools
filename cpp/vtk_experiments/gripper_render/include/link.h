@@ -28,7 +28,7 @@ namespace mev
 
         urdf::LinkConstSharedPtr urdf_link;
 
-        // std::shared_ptr<mev::Joint> joint_to_parent_link;
+        std::shared_ptr<mev::Joint> parent_to_link_joint;
 
         public:
 
@@ -37,9 +37,11 @@ namespace mev
         bool linkHasChildren();
         bool linkHasParent();
         void setParentLink(std::shared_ptr<mev::Link> parent_link);
-        // void setParentJoint(std::shared_ptr<mev::Joint> joint_to_parent_link);
+        void setParentJoint(std::shared_ptr<mev::Joint> parent_to_link_joint);
         void addChildLink(std::shared_ptr<mev::Link> child_link);
-        Eigen::Matrix4f getAbsoluteLinkTransform(); // this requires tree exploration until linkHasParent is false
+        urdf::LinkConstSharedPtr getURDFLink();
+        Eigen::Matrix4f getTransformationToParentRefFrame();
+        Eigen::Matrix4f getAbsoluteLinkTransform();
     };
 }
 #endif

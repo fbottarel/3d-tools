@@ -23,7 +23,10 @@ namespace mev
         }
 
         // init joint element, if parent exists
-        // todo
+        if (parent_link)
+        {
+            parent_to_link_joint = std::make_shared<mev::Joint> (urdf_link->parent_joint);
+        }
     }
 
     std::string Link::getLinkName()
@@ -68,20 +71,34 @@ namespace mev
         // children_link.add_joint(asd);
     }
 
-    Eigen::Matrix4f Link::getAbsoluteLinkTransform()
+    Eigen::Matrix4f Link::getTransformationToParentRefFrame()
     {
-        // explore the tree backwards towards the root until parent=null
-        if (not parent_link)
+        if (!linkHasParent())
         {
             return Eigen::Matrix4f::Identity();
         }
         else
         {
-            // factor in joint transform and joint offset as well
-            // todo
-            Eigen::Matrix4f to_parent_transform(Eigen::Matrix4f::Identity());
-            return to_parent_transform * Eigen::Matrix4f::Identity();
+            return parent_to_link_joint->getJointTransform();
         }
+    }
+
+    Eigen::Matrix4f Link::getAbsoluteLinkTransform()
+    {
+        // explore the tree backwards towards the root until parent=null
+        Eigen::Matrix4f root_transform = Eigen::Matrix4f::Identity();
+        std::shared_ptr<mev::Link> current_link = shared_from_this();
+        while (current_link->linkHasParent())
+        {
+            root_transform = root_transform * getTransformationToParentRefFrame();
+            current_link = parent_link;
+        }
+        return root_transform;
+    }
+
+    urdf::LinkConstSharedPtr Link::getURDFLink()
+    {
+        return urdf_link;
     }
 
 }
