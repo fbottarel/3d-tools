@@ -13,7 +13,7 @@ Eigen::Matrix4f getHomogeneousTransform(const urdf::Pose &pose)
                                            pose.rotation.y,
                                            pose.rotation.z);
 
-    Eigen::Matrix3f rotation;
+    Eigen::Matrix3f rotation = rotation_quat.toRotationMatrix();
     Eigen::Vector3f translation(pose.position.x, pose.position.y, pose.position.z);
 
     Eigen::Matrix4f transformation;
