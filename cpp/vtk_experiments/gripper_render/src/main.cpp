@@ -29,10 +29,11 @@
 #include <fstream>
 #include <stdio.h>
 
-#include "utils.h"
-#include "joint.h"
-#include "link.h"
-#include "visual_geometry.h"
+// #include "utils.h"
+// #include "joint.h"
+// #include "link.h"
+// #include "visual_geometry.h"
+#include "gripper.h"
 
 
 /// Print joints and links related to a link (recursively)
@@ -119,12 +120,25 @@ int main(int argc, char const *argv[])
     interactor->Start();
 
     std::shared_ptr<mev::Link> root_link = std::make_shared<mev::Link> (hand_link);
+    std::vector<std::shared_ptr<mev::Joint>> child_joints;
+    std::vector<std::shared_ptr<mev::Link>> child_links;
     for (auto current_link : hand_link->child_links)
     {
         // create the link
         std::cout << "Adding child link " << current_link->name << std::endl;
         std::shared_ptr<mev::Link> child = std::make_shared<mev::Link> (current_link, root_link);
+        child_links.push_back(child);
+        std::cout << "Added child link " << child->getLinkName() << std::endl;
+
+        std::cout << "Adding child joint " << current_link->parent_joint->name << std::endl;
+        std::shared_ptr<mev::Joint> joint = std::make_shared<mev::Joint> (current_link->parent_joint);
+        // set parent link (todo)
+        child_joints.push_back(joint);
+        std::cout << "Added child joint " << joint->getJointName() << std::endl;
         root_link->addChildLink(child);
+        std::cout << "Joint Transform: " << std::endl << joint->getJointTransform() <<std::endl;
+        std::cout << "Link transform to root: " << std::endl << child->getAbsoluteLinkTransform();
+
     }
 
     return EXIT_SUCCESS;
@@ -143,6 +157,7 @@ void printChildrenJointsLinks(const std::string link_name, const urdf::ModelInte
 
         urdf::Pose pose = joint->parent_to_joint_origin_transform;
         std::cout << getHomogeneousTransform(pose) << std::endl << std::endl;
+
 
         printChildrenJointsLinks(joint->child_link_name, model);
     }
