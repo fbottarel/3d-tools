@@ -3,7 +3,8 @@ add_executable(gripper_render
                     visual_geometry.cpp
                     joint.cpp
                     link.cpp
-                    utils.cpp)
+                    utils.cpp
+                    gripper.cpp)
 target_link_libraries(gripper_render
                     ${urdfdom_LIBRARIES}
                     Eigen3::Eigen
