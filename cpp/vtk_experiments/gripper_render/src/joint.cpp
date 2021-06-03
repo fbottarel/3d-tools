@@ -39,6 +39,7 @@ namespace mev
                       urdf_joint->axis.z;
         joint_axis.normalize();
         setJointRefFrame(getHomogeneousTransform(urdf_joint->parent_to_joint_origin_transform));
+        std::cout << "[DEBUG] created joint " << joint_name << std::endl;
     }
 
     void Joint::setLinks(std::shared_ptr<Link> parent_link, std::shared_ptr<Link> child_link)
