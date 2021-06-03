@@ -29,6 +29,8 @@ namespace mev
     {
         public:
 
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW // mandatory when using eigen with fixed size matrices
+
         std::string mesh_path;
         std::string mesh_color;
 

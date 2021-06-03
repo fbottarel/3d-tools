@@ -32,6 +32,8 @@ namespace mev
 
         public:
 
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW // mandatory when using eigen with fixed size matrices
+
         Gripper();
         Gripper(const urdf::ModelInterfaceSharedPtr source_urdf);
         Gripper(const std::string gripper_urdf_filename);

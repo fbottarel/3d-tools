@@ -35,6 +35,8 @@ namespace mev
 
         public:
 
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW // mandatory when using eigen with fixed size matrices
+
         Joint();
         Joint(urdf::JointConstSharedPtr urdf_joint);
         void setLinks(std::shared_ptr<Link> parent_link, std::shared_ptr<Link> child_link);
