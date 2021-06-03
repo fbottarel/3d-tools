@@ -42,9 +42,12 @@ namespace mev
         void initGripperFromURDF(const std::string gripper_urdf_filename);
         void initLinkTree(const std::shared_ptr<Link> root_link);
         void setGripperRootPose(const Eigen::Matrix4f& root_pose);
+        void setJointValues(const std::vector<float>& joint_values);
         Eigen::Matrix4f getGripperRootPose();
         void addGripperGeometriesToRenderer(const vtkSmartPointer<vtkRenderer> renderer);
+        void addGripperGeometriesToRenderer(std::shared_ptr<mev::Link> link, const vtkSmartPointer<vtkRenderer> renderer);
         void refreshGripperGeometries();
+        void refreshGripperGeometries(std::shared_ptr<mev::Link> link, const Eigen::Matrix4f& link_tree_root_frame);
     };
 }
 

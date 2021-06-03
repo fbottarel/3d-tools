@@ -53,7 +53,6 @@ namespace mev
     {
         // for every child of this link
         // call this function
-        // joint is automagically called by the link constructor
         for (auto urdf_child_link : root_link->getURDFLink()->child_links)
         {
             std::shared_ptr<Link> child_link = std::make_shared<Link> (urdf_child_link, root_link, urdf_path);
@@ -63,4 +62,58 @@ namespace mev
         }
         return;
     }
+
+    void Gripper::refreshGripperGeometries()
+    {
+        // here, we call the visual geometry setGeometryWorldPose function with respect to the root pose of the gripper
+        // for every link
+        refreshGripperGeometries(gripper_root_link, gripper_root_pose);
+    }
+
+    void Gripper::refreshGripperGeometries(std::shared_ptr<mev::Link> link, const Eigen::Matrix4f& link_tree_root_frame)
+    {
+        link->setLinkGeometryWorldPose(link_tree_root_frame * link->getAbsoluteLinkTransform());
+        for (auto child : link->getLinkChildren())
+        {
+            refreshGripperGeometries(child, link_tree_root_frame);
+        }
+    }
+
+    void Gripper::setGripperRootPose(const Eigen::Matrix4f& root_pose)
+    {
+        gripper_root_pose = root_pose;
+        refreshGripperGeometries();
+    }
+
+    void Gripper::addGripperGeometriesToRenderer(std::shared_ptr<mev::Link> link, const vtkSmartPointer<vtkRenderer> renderer)
+    {
+        std::cout << "[DEBUG] adding geometry for link " << link->getLinkName() << std::endl;
+        link->addGeometryToRenderer(renderer);
+        // For each link, get the overall transform and set the geometry position
+        for (auto child : link->getLinkChildren())
+        {
+            addGripperGeometriesToRenderer(child, renderer);
+        }
+    }
+
+    void Gripper::addGripperGeometriesToRenderer(const vtkSmartPointer<vtkRenderer> renderer)
+    {
+        addGripperGeometriesToRenderer(gripper_root_link, renderer);
+        refreshGripperGeometries();
+    }
+
+    void Gripper::setJointValues(const std::vector<float>& joint_values)
+    {
+        if (joint_values.size() != gripper_joints.size())
+        {
+            std::cout << "[ERROR] number of joint values different from number of gripper joints" << std::endl;
+        }
+        for (int joint_idx = 0; joint_idx < gripper_joints.size(); joint_idx++)
+        {
+            std::cout << "[DEBUG] setting value of joint " << gripper_joints[joint_idx]->getJointName() << " to " << joint_values[joint_idx] << std::endl;
+            gripper_joints[joint_idx]->setJointValue(joint_values[joint_idx]);
+        }
+        refreshGripperGeometries();
+    }
+
 }
