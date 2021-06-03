@@ -29,6 +29,7 @@ namespace mev
         std::vector<std::shared_ptr<Joint>> gripper_joints;
 
         urdf::ModelInterfaceSharedPtr urdf_model;
+        std::string urdf_path;
 
         public:
 

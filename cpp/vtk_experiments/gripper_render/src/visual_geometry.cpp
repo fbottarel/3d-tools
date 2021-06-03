@@ -55,11 +55,15 @@ namespace mev
         return geometry_actor;
     }
 
-    URDFVisualGeometry::URDFVisualGeometry(urdf::MeshSharedPtr urdf_geometry)
-    : VisualGeometry(urdf_geometry->filename),
-      urdf_geometry{urdf_geometry}
+    void VisualGeometry::addGeometryToRenderer(vtkSmartPointer<vtkRenderer> renderer)
     {
     }
 
-}
+    /// the forward slash here is dirty, it should be fixed
+    URDFVisualGeometry::URDFVisualGeometry(urdf::MeshSharedPtr urdf_geometry, const std::string& urdf_path)
+    : VisualGeometry(getDirPathFromFilePath(urdf_path) + "/" + urdf_geometry->filename),
+      urdf_geometry {urdf_geometry},
+      urdf_path {urdf_path}
+    {
+    }
 

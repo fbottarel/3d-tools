@@ -51,8 +51,9 @@ namespace mev
         public:
 
         urdf::MeshSharedPtr urdf_geometry;
+        std::string urdf_path;
 
-        URDFVisualGeometry(urdf::MeshSharedPtr urdf_geometry);
+        URDFVisualGeometry(urdf::MeshSharedPtr urdf_geometry, const std::string& urdf_path = "");
     };
 
 }

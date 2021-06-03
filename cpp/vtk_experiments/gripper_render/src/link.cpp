@@ -2,8 +2,9 @@
 
 namespace mev
 {
-    Link::Link(urdf::LinkConstSharedPtr urdf_link, std::shared_ptr<mev::Link> parent_link)
+    Link::Link(urdf::LinkConstSharedPtr urdf_link, std::shared_ptr<mev::Link> parent_link, const std::string& urdf_path)
     : urdf_link {urdf_link},
+      urdf_path {urdf_path},
       parent_link {parent_link}
     {
         link_name = urdf_link->name;
@@ -14,7 +15,7 @@ namespace mev
             // Only mesh geometry is supported atm
             if (urdf_link->visual->geometry->type == urdf_link->visual->geometry->MESH)
             {
-                link_visual_geometry = std::make_shared<mev::URDFVisualGeometry> (std::dynamic_pointer_cast<urdf::Mesh>(urdf_link->visual->geometry));
+                link_visual_geometry = std::make_shared<mev::URDFVisualGeometry> (std::dynamic_pointer_cast<urdf::Mesh>(urdf_link->visual->geometry), urdf_path);
             }
         }
         else

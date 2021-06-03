@@ -27,12 +27,15 @@ namespace mev
         std::shared_ptr<mev::URDFVisualGeometry> link_visual_geometry;
 
         urdf::LinkConstSharedPtr urdf_link;
+        std::string urdf_path; // path to urdf file
 
         std::shared_ptr<mev::Joint> parent_to_link_joint;
 
         public:
 
-        Link(urdf::LinkConstSharedPtr urdf_link, std::shared_ptr<mev::Link> parent_link = nullptr);
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW // mandatory when using eigen with fixed size matrices
+
+        Link(urdf::LinkConstSharedPtr urdf_link, std::shared_ptr<mev::Link> parent_link = nullptr, const std::string& urdf_path = "");
         std::string getLinkName();
         bool linkHasChildren();
         bool linkHasParent();

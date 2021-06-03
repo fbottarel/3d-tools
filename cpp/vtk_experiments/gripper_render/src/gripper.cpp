@@ -24,7 +24,7 @@ namespace mev
     {
         urdf_model = source_urdf;
         gripper_name = urdf_model->getName();
-        gripper_root_link = std::make_shared<Link> (source_urdf->getRoot(), nullptr);
+        gripper_root_link = std::make_shared<Link> (source_urdf->getRoot(), nullptr, urdf_path);
         // follow the tree recursively
         initLinkTree(gripper_root_link);
     }
@@ -40,6 +40,7 @@ namespace mev
         if (urdf_model)
         {
             std::cout << "URDF file parsed successfully" << std::endl;
+            urdf_path = gripper_urdf_filename;
             initGripperFromURDF(urdf_model);
         }
         else
@@ -55,7 +56,9 @@ namespace mev
         // joint is automagically called by the link constructor
         for (auto urdf_child_link : root_link->getURDFLink()->child_links)
         {
-            std::shared_ptr<Link> child_link = std::make_shared<Link> (urdf_child_link, root_link);
+            std::shared_ptr<Link> child_link = std::make_shared<Link> (urdf_child_link, root_link, urdf_path);
+            root_link->addChildLink(child_link);
+            gripper_joints.push_back(child_link->getParentToLinkJoint());
             initLinkTree(child_link);
         }
         return;
