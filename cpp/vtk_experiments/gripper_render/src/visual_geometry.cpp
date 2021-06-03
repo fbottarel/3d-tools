@@ -1,4 +1,5 @@
 #include "visual_geometry.h"
+#include <iostream>
 
 namespace mev
 {
@@ -21,6 +22,7 @@ namespace mev
 
     bool VisualGeometry::setGeometryWorldPose(const Eigen::Matrix4f& geometry_world_pose)
     {
+        std::cout << "[DEBUG] setting " << std::endl << geometry_world_pose << std::endl;
         this->geometry_world_pose = geometry_world_pose;
 
         Eigen::Matrix3f rotation = geometry_world_pose.block<3,3>(0,0);
@@ -47,6 +49,8 @@ namespace mev
                                        rotation_euler_deg[2],
                                        rotation_euler_deg[0]);
 
+        std::cout << "geometry is at position " << geometry_actor->GetPosition()[0] << " " << geometry_actor->GetPosition()[1] << " " << geometry_actor->GetPosition()[2] << std::endl;
+
         return true;
     }
 
@@ -57,6 +61,8 @@ namespace mev
 
     void VisualGeometry::addGeometryToRenderer(vtkSmartPointer<vtkRenderer> renderer)
     {
+        // std::cout << "geometry is at position " << geometry_actor->GetPosition()[0] << " " << geometry_actor->GetPosition()[1] << " " << geometry_actor->GetPosition()[2] << std::endl;
+        renderer->AddActor(geometry_actor);
     }
 
     /// the forward slash here is dirty, it should be fixed
@@ -67,3 +73,4 @@ namespace mev
     {
     }
 
+}

@@ -15,8 +15,10 @@
 #include <vtkNew.h>
 #include <vtkNamedColors.h>
 #include <vtkProperty.h>
+#include <vtkRenderer.h>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <urdf_model/link.h>
 #include <utils.h>
@@ -37,13 +39,14 @@ namespace mev
         Eigen::Matrix4f geometry_world_pose;
 
         vtkSmartPointer<vtkPolyData> geometry_polydata;
-        vtkNew<vtkPolyDataMapper> geometry_mapper; // shared pointer and then initialize in constructor
+        vtkNew<vtkPolyDataMapper> geometry_mapper;
         vtkNew<vtkActor> geometry_actor;
 
         VisualGeometry(const std::string& path = "",
                        const std::string& color = "SlateGray");
         bool setGeometryWorldPose(const Eigen::Matrix4f& geometry_world_pose);
         vtkSmartPointer<vtkActor> getGeometryActor();
+        void addGeometryToRenderer(vtkSmartPointer<vtkRenderer> renderer);
     };
 
     class URDFVisualGeometry : public VisualGeometry
