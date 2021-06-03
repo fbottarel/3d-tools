@@ -42,9 +42,13 @@ namespace mev
         void setParentLink(std::shared_ptr<mev::Link> parent_link);
         void setParentJoint(std::shared_ptr<mev::Joint> parent_to_link_joint);
         void addChildLink(std::shared_ptr<mev::Link> child_link);
+        void addGeometryToRenderer(vtkSmartPointer<vtkRenderer> renderer);
+        void setLinkGeometryWorldPose(const Eigen::Matrix4f& pose);
         urdf::LinkConstSharedPtr getURDFLink();
         Eigen::Matrix4f getTransformationToParentRefFrame();
         Eigen::Matrix4f getAbsoluteLinkTransform();
+        std::vector<std::shared_ptr<mev::Link>> getLinkChildren();
+        std::shared_ptr<mev::Joint> getParentToLinkJoint();
     };
 }
 #endif

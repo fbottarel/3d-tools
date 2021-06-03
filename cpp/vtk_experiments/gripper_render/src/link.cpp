@@ -28,6 +28,8 @@ namespace mev
         {
             parent_to_link_joint = std::make_shared<mev::Joint> (urdf_link->parent_joint);
         }
+
+        std::cout << "[DEBUG] Created child link " << getLinkName() << std::endl;
     }
 
     std::string Link::getLinkName()
@@ -102,4 +104,26 @@ namespace mev
         return urdf_link;
     }
 
+    void Link::addGeometryToRenderer(vtkSmartPointer<vtkRenderer> renderer)
+    {
+        link_visual_geometry->addGeometryToRenderer(renderer);
+    }
+
+    void Link::setLinkGeometryWorldPose(const Eigen::Matrix4f& pose)
+    {
+        std::cout << "[DEBUG] setting world pose for geometry of link " << link_name << std::endl;
+        Eigen::Matrix4f visual_world_pose = pose * link_visual_origin;
+        std::cout << visual_world_pose << std::endl;
+        link_visual_geometry->setGeometryWorldPose(visual_world_pose);
+    }
+
+    std::vector<std::shared_ptr<mev::Link>> Link::getLinkChildren()
+    {
+        return children_link;
+    }
+
+    std::shared_ptr<mev::Joint> Link::getParentToLinkJoint()
+    {
+        return parent_to_link_joint;
+    }
 }
