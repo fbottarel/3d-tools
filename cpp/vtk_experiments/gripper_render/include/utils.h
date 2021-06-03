@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <fstream>
+#include <filesystem>
 
 #include <urdf_model/pose.h>
 
@@ -26,5 +27,8 @@ Eigen::Matrix4f getHomogeneousTransform(const urdf::Pose &pose);
 
 /// Read mesh from file
 vtkSmartPointer<vtkPolyData> readPolyDataFromFile(std::string const& mesh_path);
+
+/// Get directory from path to file
+std::string getDirPathFromFilePath(const std::string& dir_path);
 
 #endif

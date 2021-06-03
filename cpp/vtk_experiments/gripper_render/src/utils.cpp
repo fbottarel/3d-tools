@@ -88,3 +88,16 @@ vtkSmartPointer<vtkPolyData> readPolyDataFromFile(std::string const& fileName)
   }
   return polyData;
 }
+
+std::string getDirPathFromFilePath(const std::string& dir_path)
+{
+  std::filesystem::path input_path(dir_path);
+  if (std::filesystem::is_directory(input_path))
+  {
+    return dir_path;
+  }
+  else
+  {
+    return input_path.parent_path().string();
+  }
+}
