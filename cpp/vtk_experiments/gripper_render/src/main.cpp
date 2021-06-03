@@ -18,7 +18,6 @@
 #include <vtkPolyData.h>
 #include <vtkSphereSource.h>
 
-
 #include <urdf_model/model.h>
 #include <urdf_model/pose.h>
 #include <urdf_parser/urdf_parser.h>
@@ -29,12 +28,7 @@
 #include <fstream>
 #include <stdio.h>
 
-// #include "utils.h"
-// #include "joint.h"
-// #include "link.h"
-// #include "visual_geometry.h"
 #include "gripper.h"
-
 
 /// Print joints and links related to a link (recursively)
 void printChildrenJointsLinks(const std::string link_name, const urdf::ModelInterfaceSharedPtr model);
@@ -59,18 +53,18 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    std::cout << "Robot name: \t\t" << gripper_urdf_model->getName() << std::endl;
-    std::cout << "Root node name: \t" << gripper_urdf_model->getRoot()->name << std::endl;
+    // std::cout << "Robot name: \t\t" << gripper_urdf_model->getName() << std::endl;
+    // std::cout << "Root node name: \t" << gripper_urdf_model->getRoot()->name << std::endl;
 
-    // Explore the tree as a sanity test
-    std::cout << "Joints:" << std::endl;
-    printChildrenJointsLinks(gripper_urdf_model->getRoot()->name, gripper_urdf_model);
+    // // Explore the tree as a sanity test
+    // std::cout << "Joints:" << std::endl;
+    // printChildrenJointsLinks(gripper_urdf_model->getRoot()->name, gripper_urdf_model);
 
-    // Try to load the mesh
-    vtkSmartPointer<vtkPolyData> hand_polydata = readPolyDataFromFile("meshes/visual/hand.stl");
-    vtkSmartPointer<vtkPolyData> finger_polydata = readPolyDataFromFile("meshes/visual/finger.stl");
+    // // Try to load the mesh
+    // vtkSmartPointer<vtkPolyData> hand_polydata = readPolyDataFromFile("meshes/visual/hand.stl");
+    // vtkSmartPointer<vtkPolyData> finger_polydata = readPolyDataFromFile("meshes/visual/finger.stl");
 
-    // Display the mesh
+    // // Display the mesh
     std::string background_color = "MidnightBlue";
     vtkNew<vtkNamedColors> colors;
 
@@ -83,28 +77,28 @@ int main(int argc, char const *argv[])
     vtkNew<vtkRenderer> renderer;
     renderer->AddActor(axes_actor);
 
-    urdf::LinkConstSharedPtr hand_link = gripper_urdf_model->getLink("panda_hand");
-    urdf::LinkConstSharedPtr finger_left_link = gripper_urdf_model->getLink("panda_leftfinger");
-    urdf::LinkConstSharedPtr finger_right_link = gripper_urdf_model->getLink("panda_rightfinger");
+    // urdf::LinkConstSharedPtr hand_link = gripper_urdf_model->getLink("panda_hand");
+    // urdf::LinkConstSharedPtr finger_left_link = gripper_urdf_model->getLink("panda_leftfinger");
+    // urdf::LinkConstSharedPtr finger_right_link = gripper_urdf_model->getLink("panda_rightfinger");
 
-    Eigen::Matrix4f hand_tf(Eigen::Matrix4f::Identity());
-    Eigen::Matrix4f finger_right_tf(hand_tf);
-    finger_right_tf(2,3) = 0.06;
-    Eigen::Matrix4f finger_left_tf(finger_right_tf);
-    finger_left_tf.block<2,2>(0,0) << -1, 0, 0, -1;
+    // Eigen::Matrix4f hand_tf(Eigen::Matrix4f::Identity());
+    // Eigen::Matrix4f finger_right_tf(hand_tf);
+    // finger_right_tf(2,3) = 0.06;
+    // Eigen::Matrix4f finger_left_tf(finger_right_tf);
+    // finger_left_tf.block<2,2>(0,0) << -1, 0, 0, -1;
 
-    // Dynamic casting is necessary since the urdf parsed model points to a parent class of urdf::Mesh
-    mev::URDFVisualGeometry hand_geom(std::dynamic_pointer_cast<urdf::Mesh>(hand_link->visual->geometry));
-    mev::URDFVisualGeometry finger_left_geom(std::dynamic_pointer_cast<urdf::Mesh>(finger_left_link->visual->geometry));
-    mev::URDFVisualGeometry finger_right_geom(std::dynamic_pointer_cast<urdf::Mesh>(finger_right_link->visual->geometry));
+    // // Dynamic casting is necessary since the urdf parsed model points to a parent class of urdf::Mesh
+    // mev::URDFVisualGeometry hand_geom(std::dynamic_pointer_cast<urdf::Mesh>(hand_link->visual->geometry));
+    // mev::URDFVisualGeometry finger_left_geom(std::dynamic_pointer_cast<urdf::Mesh>(finger_left_link->visual->geometry));
+    // mev::URDFVisualGeometry finger_right_geom(std::dynamic_pointer_cast<urdf::Mesh>(finger_right_link->visual->geometry));
 
-    hand_geom.setGeometryWorldPose(hand_tf);
-    finger_left_geom.setGeometryWorldPose(finger_left_tf);
-    finger_right_geom.setGeometryWorldPose(finger_right_tf);
+    // hand_geom.setGeometryWorldPose(hand_tf);
+    // finger_left_geom.setGeometryWorldPose(finger_left_tf);
+    // finger_right_geom.setGeometryWorldPose(finger_right_tf);
 
-    renderer->AddActor(hand_geom.getGeometryActor());
-    renderer->AddActor(finger_right_geom.getGeometryActor());
-    renderer->AddActor(finger_left_geom.getGeometryActor());
+    // renderer->AddActor(hand_geom.getGeometryActor());
+    // renderer->AddActor(finger_right_geom.getGeometryActor());
+    // renderer->AddActor(finger_left_geom.getGeometryActor());
 
     renderer->SetBackground(colors->GetColor3d(background_color).GetData());
     vtkNew<vtkRenderWindow> render_window;
@@ -115,34 +109,48 @@ int main(int argc, char const *argv[])
     interactor->SetRenderWindow(render_window);
     vtkNew<vtkInteractorStyleTrackballCamera> style;
     interactor->SetInteractorStyle(style);
+    // render_window->Render();
+    // interactor->Initialize();
+    // interactor->Start();
+
+    // std::shared_ptr<mev::Link> root_link = std::make_shared<mev::Link> (hand_link);
+    // std::vector<std::shared_ptr<mev::Joint>> child_joints;
+    // std::vector<std::shared_ptr<mev::Link>> child_links;
+    // for (auto current_link : hand_link->child_links)
+    // {
+    //     // create the link
+    //     std::cout << "Adding child link " << current_link->name << std::endl;
+    //     std::shared_ptr<mev::Link> child = std::make_shared<mev::Link> (current_link, root_link);
+    //     child_links.push_back(child);
+    //     std::cout << "Added child link " << child->getLinkName() << std::endl;
+
+    //     std::cout << "Adding child joint " << current_link->parent_joint->name << std::endl;
+    //     std::shared_ptr<mev::Joint> joint = std::make_shared<mev::Joint> (current_link->parent_joint);
+    //     // set parent link (todo)
+    //     child_joints.push_back(joint);
+    //     std::cout << "Added child joint " << joint->getJointName() << std::endl;
+    //     root_link->addChildLink(child);
+    //     std::cout << "Joint Transform: " << std::endl << joint->getJointTransform() <<std::endl;
+    //     std::cout << "Link transform to root: " << std::endl << child->getAbsoluteLinkTransform() << std::endl;
+    // }
+
+    // test base constructor
+    mev::Gripper test_gripper(urdf_filename);
+    test_gripper.refreshGripperGeometries();
+    test_gripper.addGripperGeometriesToRenderer(renderer);
+
     render_window->Render();
     interactor->Initialize();
     interactor->Start();
 
-    std::shared_ptr<mev::Link> root_link = std::make_shared<mev::Link> (hand_link);
-    std::vector<std::shared_ptr<mev::Joint>> child_joints;
-    std::vector<std::shared_ptr<mev::Link>> child_links;
-    for (auto current_link : hand_link->child_links)
-    {
-        // create the link
-        std::cout << "Adding child link " << current_link->name << std::endl;
-        std::shared_ptr<mev::Link> child = std::make_shared<mev::Link> (current_link, root_link);
-        child_links.push_back(child);
-        std::cout << "Added child link " << child->getLinkName() << std::endl;
+    std::vector<float> joint_values = {0.01, 0.01};
+    test_gripper.setJointValues(joint_values);
 
-        std::cout << "Adding child joint " << current_link->parent_joint->name << std::endl;
-        std::shared_ptr<mev::Joint> joint = std::make_shared<mev::Joint> (current_link->parent_joint);
-        // set parent link (todo)
-        child_joints.push_back(joint);
-        std::cout << "Added child joint " << joint->getJointName() << std::endl;
-        root_link->addChildLink(child);
-        std::cout << "Joint Transform: " << std::endl << joint->getJointTransform() <<std::endl;
-        std::cout << "Link transform to root: " << std::endl << child->getAbsoluteLinkTransform();
-
-    }
+    render_window->Render();
+    interactor->Initialize();
+    interactor->Start();
 
     return EXIT_SUCCESS;
-
 }
 
 /// Print joints and links related to a link (recursively)
@@ -157,7 +165,6 @@ void printChildrenJointsLinks(const std::string link_name, const urdf::ModelInte
 
         urdf::Pose pose = joint->parent_to_joint_origin_transform;
         std::cout << getHomogeneousTransform(pose) << std::endl << std::endl;
-
 
         printChildrenJointsLinks(joint->child_link_name, model);
     }
