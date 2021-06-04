@@ -15,7 +15,7 @@ namespace mev
         initGripperFromURDF(source_urdf);
     }
 
-    Gripper::Gripper(const std::string gripper_urdf_filename) : Gripper()
+    Gripper::Gripper(const std::string& gripper_urdf_filename) : Gripper()
     {
         initGripperFromURDF(gripper_urdf_filename);
     }
@@ -29,7 +29,7 @@ namespace mev
         initLinkTree(gripper_root_link);
     }
 
-    void Gripper::initGripperFromURDF(const std::string gripper_urdf_filename)
+    void Gripper::initGripperFromURDF(const std::string& gripper_urdf_filename)
     {
         if (!fileExists(gripper_urdf_filename))
         {

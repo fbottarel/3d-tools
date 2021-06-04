@@ -37,9 +37,9 @@ namespace mev
 
         Gripper();
         Gripper(const urdf::ModelInterfaceSharedPtr source_urdf);
-        Gripper(const std::string gripper_urdf_filename);
+        Gripper(const std::string& gripper_urdf_filename);
         void initGripperFromURDF(const urdf::ModelInterfaceSharedPtr source_urdf);
-        void initGripperFromURDF(const std::string gripper_urdf_filename);
+        void initGripperFromURDF(const std::string& gripper_urdf_filename);
         void initLinkTree(const std::shared_ptr<Link> root_link);
         void setGripperRootPose(const Eigen::Matrix4f& root_pose);
         void setJointValues(const std::vector<float>& joint_values);
