@@ -4,7 +4,8 @@ add_executable(gripper_render
                     joint.cpp
                     link.cpp
                     utils.cpp
-                    gripper.cpp)
+                    gripper.cpp
+                    manipulation_env.cpp)
 target_link_libraries(gripper_render
                     ${urdfdom_LIBRARIES}
                     Eigen3::Eigen
