@@ -8,8 +8,7 @@ namespace mev
       parent_link {parent_link}
     {
         link_name = urdf_link->name;
-
-        if (urdf_link->visual)
+        if (linkHasGeometry())
         {
             link_visual_origin = getHomogeneousTransform(urdf_link->visual->origin);
             // Only mesh geometry is supported atm
@@ -52,6 +51,18 @@ namespace mev
     bool Link::linkHasChildren()
     {
         if (children_link.size() > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    bool Link::linkHasGeometry()
+    {
+        if (urdf_link->visual)
         {
             return true;
         }
@@ -106,15 +117,29 @@ namespace mev
 
     void Link::addGeometryToRenderer(vtkSmartPointer<vtkRenderer> renderer)
     {
-        link_visual_geometry->addGeometryToRenderer(renderer);
+        if (linkHasGeometry())
+        {
+           link_visual_geometry->addGeometryToRenderer(renderer);
+        }
+        else
+        {
+            std::cout << "[INFO] link " << link_name << " has no visual geometry" << std::endl;
+        }
     }
 
     void Link::setLinkGeometryWorldPose(const Eigen::Matrix4f& pose)
     {
-        std::cout << "[DEBUG] setting world pose for geometry of link " << link_name << std::endl;
-        Eigen::Matrix4f visual_world_pose = pose * link_visual_origin;
-        std::cout << visual_world_pose << std::endl;
-        link_visual_geometry->setGeometryWorldPose(visual_world_pose);
+        if (linkHasGeometry())
+        {
+            std::cout << "[DEBUG] setting world pose for geometry of link " << link_name << std::endl;
+            Eigen::Matrix4f visual_world_pose = pose * link_visual_origin;
+            std::cout << visual_world_pose << std::endl;
+            link_visual_geometry->setGeometryWorldPose(visual_world_pose);
+        }
+        else
+        {
+            std::cout << "[INFO] link " << link_name << " has no visual geometry" << std::endl;
+        }
     }
 
     std::vector<std::shared_ptr<mev::Link>> Link::getLinkChildren()

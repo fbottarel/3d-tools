@@ -39,6 +39,7 @@ namespace mev
         std::string getLinkName();
         bool linkHasChildren();
         bool linkHasParent();
+        bool linkHasGeometry();
         void setParentLink(std::shared_ptr<mev::Link> parent_link);
         void setParentJoint(std::shared_ptr<mev::Joint> parent_to_link_joint);
         void addChildLink(std::shared_ptr<mev::Link> child_link);
