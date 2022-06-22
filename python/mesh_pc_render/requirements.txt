@@ -10,7 +10,7 @@ lxml==4.5.0
 mpmath==1.1.0
 msgpack==1.0.0
 networkx==2.4
-numpy==1.18.3
+numpy==1.22.0
 Pillow==7.1.1
 pycollada==0.7.1
 pyglet==1.5.3
